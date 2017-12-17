@@ -8,6 +8,7 @@ seqnum = 6
 seq = []
 for i in range(seqlen):
 	seq.append([0] * seqnum)
+inverts = [0] * seqnum
 
 cursorrow = int(0)
 cursorcol = int(0)
@@ -32,7 +33,7 @@ key_down = "\u001b[B"
 key_right = "\u001b[C"
 key_left = "\u001b[D"
 
-print("\033[2J")
+print("\033[2J\033[Hpress i to invert output")
 while True:
 	t = time.time()
 
@@ -40,11 +41,12 @@ while True:
 	pline = ":"
 	outbyte = 0
 	for coln, col in enumerate(seq[playrow]):
-		if t - lasttime < 60.0 / (bpm*7) * col:
-			pline += "!"+str(coln)+"!"
+		inv = inverts[coln] == 1
+		on = t - lasttime < 60.0 / (bpm*7) * col
+		if inv: pline += "\033[44m"
+		pline += " "+str(coln)+("!" if on else " ")+"\033[0m"
+		if ((not inv) and on) or (inv and (not on)):
 			outbyte |= 1 << coln
-		else:
-			pline += " "+str(coln)+" "
 		pline += ":"
 	outf.write(bytes([outbyte]))
 	outf.flush()
@@ -81,12 +83,14 @@ while True:
 			if k == " ":
 				seq[cursorrow][cursorcol] = 0
 				changed = 1
-			elif k in ['a','s','d','f','g','h','j','k','l']:
+			elif k in ['a','s','d','f','g','h','j','k','l','-']:
 				seq[cursorrow][cursorcol] = 2
 				changed = 1
-			elif k in ['z','x','c','v','b','n','m']: # oispa makrot
+			elif k in ['z','x','c','v','b','n','m','.']: # oispa makrot
 				seq[cursorrow][cursorcol] = 1
 				changed = 1
+			elif k == "i":
+				inverts[cursorcol] ^= 1
 	if changed:
 		cursorrow = (cursorrow + 1) % seqlen
 
