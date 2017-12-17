@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 import sys, os, termios, fcntl, time
+
+outf = open(sys.argv[1],"wb")
+
 seqlen = 16
-seqnum = 8
+seqnum = 6
 seq = []
 for i in range(seqlen):
 	seq.append([0] * seqnum)
 
-cursorrow = 0
-cursorcol = 0
+cursorrow = int(0)
+cursorcol = int(0)
+playrow = int(0)
+playlen = seqlen
+bpm = 150.0
+lasttime = time.time()
 
 # http://love-python.blogspot.fi/2010/03/getch-in-python-get-single-character.html
 fd = sys.stdin.fileno()
@@ -27,21 +34,39 @@ key_left = "\u001b[D"
 
 print("\033[2J")
 while True:
+	t = time.time()
+
 	print("\033[H")
+	pline = ":"
+	outbyte = 0
+	for coln, col in enumerate(seq[playrow]):
+		if t - lasttime < 60.0 / (bpm*7) * col:
+			pline += "!"+str(coln)+"!"
+			outbyte |= 1 << coln
+		else:
+			pline += " "+str(coln)+" "
+		pline += ":"
+	outf.write(bytes([outbyte]))
+	outf.flush()
+	print(pline)
+
 	for rown, row in enumerate(seq):
 		pline = "|"
 		for coln, col in enumerate(row):
 			ch = " .-"[col]*3
 			if coln == cursorcol and rown == cursorrow:
+				pline += "\033[42m"+ch+"\33[0m"
+			elif rown == playrow:
 				pline += "\033[43m"+ch+"\33[0m"
 			else:
 				pline += ch
 			pline += "|"
 		print(pline)
+
 	fcntl.fcntl(fd, fcntl.F_SETFL, oldflags | os.O_NONBLOCK)
-	key = sys.stdin.read(4)
-	
+	key = sys.stdin.read(3)
 	fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
+
 	changed = False
 	if key == key_up:
 		cursorrow = (cursorrow - 1) % seqlen
@@ -51,16 +76,23 @@ while True:
 		cursorcol = (cursorcol - 1) % seqnum
 	elif key == key_right:
 		cursorcol = (cursorcol + 1) % seqnum
-	elif key == " ":
-		seq[cursorrow][cursorcol] = 0
-		changed = 1
-	elif key == "-":
-		seq[cursorrow][cursorcol] = 2
-		changed = 1
-	elif key == ".": # oispa makrot
-		seq[cursorrow][cursorcol] = 1
-		changed = 1
+	else:
+		for k in key:
+			if k == " ":
+				seq[cursorrow][cursorcol] = 0
+				changed = 1
+			elif k in ['a','s','d','f','g','h','j','k','l']:
+				seq[cursorrow][cursorcol] = 2
+				changed = 1
+			elif k in ['z','x','c','v','b','n','m']: # oispa makrot
+				seq[cursorrow][cursorcol] = 1
+				changed = 1
 	if changed:
 		cursorrow = (cursorrow + 1) % seqlen
+
+	timestep = 60.0 / (bpm*4)
+	if t - lasttime >= timestep:
+		playrow = (playrow + 1) % playlen
+		lasttime += timestep
 	time.sleep(0.01)
 
