@@ -31,6 +31,10 @@ def getrow(row):
 def getwholeseq():
 	return list(zip(*[pats[seqpats[col]] for col in range(seqnum)]))
 
+def loadpattern():
+	data = pickle.load(open("pats.dat","rb"))
+	globals().update(data)
+
 inverts = [0] * seqnum
 
 cursorrow = int(0)
@@ -38,6 +42,9 @@ cursorcol = int(0)
 playrow = int(0)
 playlen = seqlen
 bpm = 150.0
+
+loadpattern()
+
 lasttime = time.time()
 
 # http://love-python.blogspot.fi/2010/03/getch-in-python-get-single-character.html
@@ -142,8 +149,7 @@ while True:
 				data = {"pats": pats, "seqpats": seqpats, "bpm": bpm, "inverts": inverts}
 				pickle.dump(data, open("pats.dat","wb"))
 			elif k in ['l']:
-				data = pickle.load(open("pats.dat","rb"))
-				globals().update(data)
+				loadpattern()
 			elif k == "i":
 				inverts[cursorcol] ^= 1
 	if changed:
