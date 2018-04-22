@@ -60,6 +60,8 @@ while True:
 				pline += "\033[42m"+ch+"\33[0m"
 			elif rown == playrow:
 				pline += "\033[43m"+ch+"\33[0m"
+			elif rown % 4 == 0:
+				pline += "\033[46m"+ch+"\33[0m"
 			else:
 				pline += ch
 			pline += "|"
