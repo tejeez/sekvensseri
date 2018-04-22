@@ -65,7 +65,7 @@ while True:
 	pline = ":"
 	for coln, col in enumerate(seqpats):
 		pline += str(col).zfill(3)+":"
-	print(pline)
+	print(pline + " bpm:" + str(bpm).zfill(3))
 
 	pline = ":"
 	outbyte = 0
@@ -134,6 +134,10 @@ while True:
 				seqpats[cursorcol] += 1
 				if seqpats[cursorcol] >= patnum:
 					seqpats[cursorcol] = 0
+			elif k in ['e']:
+				bpm -= 0.5
+			elif k in ['r']:
+				bpm += 0.5
 			elif k == "i":
 				inverts[cursorcol] ^= 1
 	if changed:
