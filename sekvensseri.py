@@ -5,11 +5,32 @@ dryrun = len(sys.argv)<2
 if not dryrun:
 	outf = open(sys.argv[1],"wb")
 
+patnum = 64
 seqlen = 16
 seqnum = 6
 seq = []
 for i in range(seqlen):
 	seq.append([0] * seqnum)
+
+pats = []
+for i in range(patnum):
+	pats.append([0]*seqlen)
+
+seqpats = [i for i in range(seqnum)]
+
+def getcol(row, col):
+	return pats[seqpats[col]][row]
+
+def setcol(row, col, newval):
+	print(seqpats[col])
+	pats[seqpats[col]][row] = newval
+
+def getrow(row):
+	return [pats[seqpats[col]][row] for col in range(seqnum)]
+
+def getwholeseq():
+	return list(zip(*[pats[seqpats[col]] for col in range(seqnum)]))
+
 inverts = [0] * seqnum
 
 cursorrow = int(0)
@@ -40,9 +61,15 @@ while True:
 	t = time.time()
 
 	print("\033[H")
+
+	pline = ":"
+	for coln, col in enumerate(seqpats):
+		pline += str(col).zfill(3)+":"
+	print(pline)
+
 	pline = ":"
 	outbyte = 0
-	for coln, col in enumerate(seq[playrow]):
+	for coln, col in enumerate(getrow(playrow)):
 		inv = inverts[coln] == 1
 		#on = t - lasttime < 60.0 / (bpm*7) * col
 		on = col == 2 or col == 1 and t - lasttime < 60.0 / (bpm*7) or col == 3 and t - lasttime > 60.0 / (bpm*7)
@@ -57,7 +84,7 @@ while True:
 		outf.flush()
 	print(pline)
 
-	for rown, row in enumerate(seq):
+	for rown, row in enumerate(getwholeseq()):
 		pline = "|"
 		for coln, col in enumerate(row):
 			ch = " .-,"[col]*3
@@ -88,17 +115,25 @@ while True:
 	else:
 		for k in key:
 			if k == " ":
-				seq[cursorrow][cursorcol] = 0
+				setcol(cursorrow,cursorcol,0)
 				changed = 1
 			elif k in ['a','s','d','f','g','h','j','k','l','-']:
-				seq[cursorrow][cursorcol] = 2
+				setcol(cursorrow,cursorcol,2)
 				changed = 1
 			elif k in ['z','x','c','v','b','n','m','.']: # oispa makrot
-				seq[cursorrow][cursorcol] = 1
+				setcol(cursorrow,cursorcol,1)
 				changed = 1
 			elif k in [',']:
-				seq[cursorrow][cursorcol] = 3
+				setcol(cursorrow,cursorcol,3)
 				changed = 1
+			elif k in ['q']:
+				seqpats[cursorcol] -= 1
+				if seqpats[cursorcol] < 0:
+					seqpats[cursorcol] = patnum-1
+			elif k in ['w']:
+				seqpats[cursorcol] += 1
+				if seqpats[cursorcol] >= patnum:
+					seqpats[cursorcol] = 0
 			elif k == "i":
 				inverts[cursorcol] ^= 1
 	if changed:
