@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, os, termios, fcntl, time
+import sys, os, termios, fcntl, time, pickle
 
 dryrun = len(sys.argv)<2
 if not dryrun:
@@ -117,7 +117,7 @@ while True:
 			if k == " ":
 				setcol(cursorrow,cursorcol,0)
 				changed = 1
-			elif k in ['a','s','d','f','g','h','j','k','l','-']:
+			elif k in ['a','-']:
 				setcol(cursorrow,cursorcol,2)
 				changed = 1
 			elif k in ['z','x','c','v','b','n','m','.']: # oispa makrot
@@ -138,6 +138,12 @@ while True:
 				bpm -= 0.5
 			elif k in ['r']:
 				bpm += 0.5
+			elif k in ['s']:
+				data = {"pats": pats, "seqpats": seqpats, "bpm": bpm, "inverts": inverts}
+				pickle.dump(data, open("pats.dat","wb"))
+			elif k in ['l']:
+				data = pickle.load(open("pats.dat","rb"))
+				globals().update(data)
 			elif k == "i":
 				inverts[cursorcol] ^= 1
 	if changed:
