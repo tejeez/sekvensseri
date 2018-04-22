@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import sys, os, termios, fcntl, time
 
-outf = open(sys.argv[1],"wb")
+dryrun = len(sys.argv)<2
+if not dryrun:
+	outf = open(sys.argv[1],"wb")
 
 seqlen = 16
 seqnum = 6
@@ -33,7 +35,7 @@ key_down = "\u001b[B"
 key_right = "\u001b[C"
 key_left = "\u001b[D"
 
-print("\033[2J\033[Hpress i to invert output")
+print("\033[2J\033[Hpress i to invert output"+(" DRY RUN" if dryrun else ""))
 while True:
 	t = time.time()
 
@@ -50,8 +52,9 @@ while True:
 		if ((not inv) and on) or (inv and (not on)):
 			outbyte |= 1 << coln
 		pline += ":"
-	outf.write(bytes([outbyte]))
-	outf.flush()
+	if not dryrun:
+		outf.write(bytes([outbyte]))
+		outf.flush()
 	print(pline)
 
 	for rown, row in enumerate(seq):
