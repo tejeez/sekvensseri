@@ -42,7 +42,9 @@ while True:
 	outbyte = 0
 	for coln, col in enumerate(seq[playrow]):
 		inv = inverts[coln] == 1
-		on = t - lasttime < 60.0 / (bpm*7) * col
+		#on = t - lasttime < 60.0 / (bpm*7) * col
+		on = col == 2 or col == 1 and t - lasttime < 60.0 / (bpm*7) or col == 3 and t - lasttime > 60.0 / (bpm*7)
+
 		if inv: pline += "\033[44m"
 		pline += " "+str(coln)+("!" if on else " ")+"\033[0m"
 		if ((not inv) and on) or (inv and (not on)):
@@ -55,7 +57,7 @@ while True:
 	for rown, row in enumerate(seq):
 		pline = "|"
 		for coln, col in enumerate(row):
-			ch = " .-"[col]*3
+			ch = " .-,"[col]*3
 			if coln == cursorcol and rown == cursorrow:
 				pline += "\033[42m"+ch+"\33[0m"
 			elif rown == playrow:
@@ -90,6 +92,9 @@ while True:
 				changed = 1
 			elif k in ['z','x','c','v','b','n','m','.']: # oispa makrot
 				seq[cursorrow][cursorcol] = 1
+				changed = 1
+			elif k in [',']:
+				seq[cursorrow][cursorcol] = 3
 				changed = 1
 			elif k == "i":
 				inverts[cursorcol] ^= 1
